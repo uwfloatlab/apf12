@@ -1,0 +1,4 @@
+ARMFLAGS   := -mcpu=cortex-m4 -mthumb -mfloat-abi=soft# 
+STM32FLAGS := -fmessage-length=0 -ffunction-sections -fsigned-char#
+DBG        := #
+CFLAGS     := -Wall -x c -c#
