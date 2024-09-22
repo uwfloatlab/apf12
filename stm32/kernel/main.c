@@ -23,10 +23,10 @@ UART_HandleTypeDef lpuart_handle;
 static __IO uint32_t TimingDelay;
 
 void SystemClock_Config(void);
+static void SYSCLKConfig_STOP(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_RTC_Init(void);
-static void Error_Handler(void);
 
 /**
   * @brief  The application entry point.
@@ -35,7 +35,7 @@ static void Error_Handler(void);
 int main(void)
 {
     /* define the logging signature */
-    static const char *FuncName="main()";
+    // static const char *FuncName="main()";
     
     HAL_Init();
 
@@ -75,7 +75,7 @@ int main(void)
             Therefore, with wake-up counter =  0xFFFF  = 65,535 
             Wakeup Time =  0,5 ms *  65,535 = 32,7675 s ~ 33 sec.
         */
-        HAL_RTCEx_SetWakeUpTimer_IT(&RTCHandle, 0x0FFFF, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
+        HAL_RTCEx_SetWakeUpTimer_IT(&rtc_handle, 0x0FFFF, RTC_WAKEUPCLOCK_RTCCLK_DIV16);
   
         /* Enter STOP 2 mode */
         HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
@@ -99,7 +99,7 @@ int main(void)
 void SystemClock_Config(void)
 {
     /* define the logging signature */
-    static const char *FuncName="SystemClock_Config()";
+    // static const char *FuncName="SystemClock_Config()";
 
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
@@ -142,36 +142,47 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief  Configures system clock after wake-up from STOP: enable MSI, PLL
+  *         and select PLL as system clock source.
+  * @param  None
+  * @retval None
+  */
+static void SYSCLKConfig_STOP(void)
+{
+    /* TBD */
+}
+
+/**
   * @brief LPUART1 Initialization Function
   * @param None
   * @retval None
   */
 static void MX_LPUART1_UART_Init(void)
 {
-    hlpuart1.Instance = LPUART1;
-    hlpuart1.Init.BaudRate = 209700;
-    hlpuart1.Init.WordLength = UART_WORDLENGTH_7B;
-    hlpuart1.Init.StopBits = UART_STOPBITS_1;
-    hlpuart1.Init.Parity = UART_PARITY_NONE;
-    hlpuart1.Init.Mode = UART_MODE_TX_RX;
-    hlpuart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    hlpuart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-    hlpuart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-    hlpuart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-    hlpuart1.FifoMode = UART_FIFOMODE_DISABLE;
-    if (HAL_UART_Init(&hlpuart1) != HAL_OK)
+    lpuart_handle.Instance = LPUART1;
+    lpuart_handle.Init.BaudRate = 209700;
+    lpuart_handle.Init.WordLength = UART_WORDLENGTH_7B;
+    lpuart_handle.Init.StopBits = UART_STOPBITS_1;
+    lpuart_handle.Init.Parity = UART_PARITY_NONE;
+    lpuart_handle.Init.Mode = UART_MODE_TX_RX;
+    lpuart_handle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    lpuart_handle.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+    lpuart_handle.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+    lpuart_handle.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+    lpuart_handle.FifoMode = UART_FIFOMODE_DISABLE;
+    if (HAL_UART_Init(&lpuart_handle) != HAL_OK)
     {
         Error_Handler();
     }
-    if (HAL_UARTEx_SetTxFifoThreshold(&hlpuart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+    if (HAL_UARTEx_SetTxFifoThreshold(&lpuart_handle, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
     {
         Error_Handler();
     }
-    if (HAL_UARTEx_SetRxFifoThreshold(&hlpuart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+    if (HAL_UARTEx_SetRxFifoThreshold(&lpuart_handle, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
     {
         Error_Handler();
     }
-    if (HAL_UARTEx_DisableFifoMode(&hlpuart1) != HAL_OK)
+    if (HAL_UARTEx_DisableFifoMode(&lpuart_handle) != HAL_OK)
     {
         Error_Handler();
     }
@@ -223,7 +234,7 @@ static void MX_RTC_Init(void)
     sTime.Seconds = 0x0;
     sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
     sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+    if (HAL_RTC_SetTime(&rtc_handle, &sTime, RTC_FORMAT_BCD) != HAL_OK)
     {
         Error_Handler();
     }
@@ -232,7 +243,7 @@ static void MX_RTC_Init(void)
     sDate.Date = 0x1;
     sDate.Year = 0x0;
 
-    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
+    if (HAL_RTC_SetDate(&rtc_handle, &sDate, RTC_FORMAT_BCD) != HAL_OK)
     {
         Error_Handler();
     }
@@ -250,7 +261,7 @@ static void MX_RTC_Init(void)
     sAlarm.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
     sAlarm.AlarmDateWeekDay = 0x1;
     sAlarm.Alarm = RTC_ALARM_A;
-    if (HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BCD) != HAL_OK)
+    if (HAL_RTC_SetAlarm_IT(&rtc_handle, &sAlarm, RTC_FORMAT_BCD) != HAL_OK)
     {
         Error_Handler();
     }
@@ -266,7 +277,7 @@ static void MX_RTC_Init(void)
     sTamper.PrechargeDuration = RTC_TAMPERPRECHARGEDURATION_1RTCCLK;
     sTamper.TamperPullUp = RTC_TAMPER_PULLUP_ENABLE;
     sTamper.TimeStampOnTamperDetection = RTC_TIMESTAMPONTAMPERDETECTION_ENABLE;
-    if (HAL_RTCEx_SetTamper(&hrtc, &sTamper) != HAL_OK)
+    if (HAL_RTCEx_SetTamper(&rtc_handle, &sTamper) != HAL_OK)
     {
         Error_Handler();
     }
@@ -330,7 +341,7 @@ void Error_Handler(void)
     __disable_irq();
     while (1)
     {
-        /* Infitine Loop */
+        /* Infinite Loop */
     }
 }
 
@@ -344,9 +355,6 @@ void Error_Handler(void)
   */
 void assert_failed(uint8_t *file, uint32_t line)
 {
-    while (1)
-    {
-        /* Infinite Loop */
-    }
+    while (1);
 }
 #endif /* USE_FULL_ASSERT */
